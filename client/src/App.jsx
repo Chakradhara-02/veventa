@@ -27,13 +27,13 @@ const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: trpcUrl,
+      transformer: superjson,
       headers() {
         const token = localStorage.getItem('authToken');
         return token ? { Authorization: `Bearer ${token}` } : {};
       },
     }),
   ],
-  transformer: superjson,
 });
 
 function Layout({ children, hideNav }) {
