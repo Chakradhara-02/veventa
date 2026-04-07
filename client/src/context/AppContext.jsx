@@ -50,10 +50,33 @@ export function AppProvider({ children }) {
     return fallback;
   };
 
+  const isTransientNetworkError = (message) => {
+    if (!message) return false;
+    return (
+      message.includes('Unable to transform response from server') ||
+      message.includes('Failed to fetch')
+    );
+  };
+
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
   // Auth
   const login = async (email, password) => {
     try {
-      const result = await loginMutation.mutateAsync({ email, password });
+      let result;
+      try {
+        result = await loginMutation.mutateAsync({ email, password });
+      } catch (firstError) {
+        const firstMessage = getErrorMessage(firstError, 'Login failed');
+        if (!isTransientNetworkError(firstMessage)) {
+          throw firstError;
+        }
+
+        // Retry once for transient startup/network responses (common on cold starts).
+        await wait(1200);
+        result = await loginMutation.mutateAsync({ email, password });
+      }
+
       localStorage.setItem('authToken', result.token);
       setCurrentUser(result.user);
       await utils.auth.me.invalidate();
@@ -68,7 +91,20 @@ export function AppProvider({ children }) {
 
   const register = async (data) => {
     try {
-      const result = await registerMutation.mutateAsync(data);
+      let result;
+      try {
+        result = await registerMutation.mutateAsync(data);
+      } catch (firstError) {
+        const firstMessage = getErrorMessage(firstError, 'Registration failed');
+        if (!isTransientNetworkError(firstMessage)) {
+          throw firstError;
+        }
+
+        // Retry once for transient startup/network responses (common on cold starts).
+        await wait(1200);
+        result = await registerMutation.mutateAsync(data);
+      }
+
       localStorage.setItem('authToken', result.token);
       setCurrentUser(result.user);
       await utils.auth.me.invalidate();
