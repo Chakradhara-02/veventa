@@ -7,6 +7,7 @@ export function AppProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [notification, setNotification] = useState(null);
   const utils = trpc.useUtils();
+  const apiBaseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
   const eventsQuery = trpc.events.list.useQuery({ page: 1, limit: 100 });
   const userEventsQuery = trpc.registrations.getUserEvents.useQuery(undefined, {
@@ -60,6 +61,37 @@ export function AppProvider({ children }) {
 
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+  const rawAuthCall = async (procedure, input) => {
+    const endpoint = `${apiBaseUrl}/api/trpc/${procedure}?batch=1`;
+    const token = localStorage.getItem('authToken');
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        0: {
+          json: input,
+        },
+      }),
+    });
+
+    const payload = await response.json();
+    const result = Array.isArray(payload) ? payload[0] : null;
+
+    if (!result) {
+      throw new Error('Invalid server response');
+    }
+
+    if (result.error) {
+      throw new Error(result.error?.json?.message || 'Request failed');
+    }
+
+    return result?.result?.data?.json;
+  };
+
   // Auth
   const login = async (email, password) => {
     try {
@@ -72,9 +104,9 @@ export function AppProvider({ children }) {
           throw firstError;
         }
 
-        // Retry once for transient startup/network responses (common on cold starts).
+        // Fallback to raw endpoint call when tRPC transform/network glitches occur.
         await wait(1200);
-        result = await loginMutation.mutateAsync({ email, password });
+        result = await rawAuthCall('auth.login', { email, password });
       }
 
       localStorage.setItem('authToken', result.token);
@@ -100,9 +132,9 @@ export function AppProvider({ children }) {
           throw firstError;
         }
 
-        // Retry once for transient startup/network responses (common on cold starts).
+        // Fallback to raw endpoint call when tRPC transform/network glitches occur.
         await wait(1200);
-        result = await registerMutation.mutateAsync(data);
+        result = await rawAuthCall('auth.register', data);
       }
 
       localStorage.setItem('authToken', result.token);
