@@ -7,6 +7,8 @@ This project deploys best as:
 
 ## 1) Backend Deployment (Render Recommended)
 
+`render.yaml` is included for blueprint deployment.
+
 ### Service Type
 
 - Use **Web Service** (not Postgres, not Static Site).
@@ -34,7 +36,7 @@ https://your-frontend.vercel.app,https://<username>.github.io
 After deploy, verify:
 
 ```text
-https://your-backend-domain/api/trpc/system.health
+https://your-backend-domain/healthz
 ```
 
 ## 2) Frontend Deployment on Vercel

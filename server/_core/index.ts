@@ -41,6 +41,10 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
+  app.get("/healthz", (_req, res) => {
+    res.status(200).json({ ok: true });
+  });
+
   const corsOrigins = (process.env.CORS_ORIGIN || "")
     .split(",")
     .map(origin => origin.trim())
