@@ -31,7 +31,7 @@ export const groupsRouter = router({
           members: [
             {
               id: userId,
-              name: ctx.user!.email,
+              name: ctx.user!.name,
               role: 'leader',
             },
           ],
