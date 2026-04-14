@@ -76,7 +76,7 @@ export const chatsRouter = router({
         const chat = new Chat({
           eventId: new mongoose.Types.ObjectId(input.eventId),
           senderId: new mongoose.Types.ObjectId(ctx.user!.userId),
-          senderName: ctx.user!.email,
+          senderName: ctx.user!.name,
           text: input.text,
         });
 
