@@ -43,11 +43,11 @@ export default function CreateEvent() {
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
     const tagArray = form.tags.split(',').map(t => t.trim()).filter(Boolean);
-    createEvent({
+    const payload = {
       title: form.title,
       description: form.description,
       category: form.category,
-      date: form.date,
+      date: new Date(form.date),
       time: form.time,
       endTime: form.endTime,
       venue: form.venue,
@@ -55,9 +55,15 @@ export default function CreateEvent() {
       price: form.priceType === 'free' ? { type: 'free' } : { type: 'paid', amount: Number(form.priceAmount) },
       totalTickets: Number(form.totalTickets),
       isTeamEvent: form.isTeamEvent,
-      teamSize: form.isTeamEvent ? { min: Number(form.teamMin), max: Number(form.teamMax) } : null,
       tags: tagArray,
-    });
+    };
+    
+    // Only include teamSize if it's a team event
+    if (form.isTeamEvent) {
+      payload.teamSize = { min: Number(form.teamMin), max: Number(form.teamMax) };
+    }
+    
+    createEvent(payload);
     setSubmitted(true);
     setTimeout(() => navigate('/dashboard/my-events'), 1500);
   };
