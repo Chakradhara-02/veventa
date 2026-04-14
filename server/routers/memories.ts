@@ -30,7 +30,7 @@ export const memoriesRouter = router({
           eventTitle: input.eventTitle,
           author: {
             id: new mongoose.Types.ObjectId(ctx.user!.userId),
-            name: ctx.user!.email,
+            name: ctx.user!.name,
           },
           type: input.type,
           url: input.url,
@@ -194,7 +194,7 @@ export const memoriesRouter = router({
           _id: new mongoose.Types.ObjectId(),
           author: {
             id: new mongoose.Types.ObjectId(ctx.user!.userId),
-            name: ctx.user!.email,
+            name: ctx.user!.name,
           },
           text: input.text,
           createdAt: new Date(),
