@@ -73,10 +73,14 @@ export const chatsRouter = router({
           });
         }
 
+        const senderName = (ctx.user as { name?: string }).name?.trim() || ctx.user!.email;
+        const senderAvatar = (ctx.user as { avatar?: string }).avatar;
+
         const chat = new Chat({
           eventId: new mongoose.Types.ObjectId(input.eventId),
           senderId: new mongoose.Types.ObjectId(ctx.user!.userId),
-          senderName: ctx.user!.name,
+          senderName,
+          senderAvatar,
           text: input.text,
         });
 

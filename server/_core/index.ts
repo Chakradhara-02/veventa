@@ -4,7 +4,6 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createVeventaContext } from "../utils/context";
 import { connectDB } from "../db/connection";
@@ -60,8 +59,16 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  // OAuth callback under /api/oauth/callback
-  registerOAuthRoutes(app);
+
+  const hasOAuthConfig = Boolean(process.env.OAUTH_SERVER_URL && process.env.VITE_APP_ID);
+  if (hasOAuthConfig) {
+    // Lazy-load OAuth wiring only when fully configured.
+    const { registerOAuthRoutes } = await import("./oauth");
+    registerOAuthRoutes(app);
+  } else {
+    console.log("[OAuth] Disabled: set OAUTH_SERVER_URL and VITE_APP_ID to enable /api/oauth/callback");
+  }
+
   // tRPC API with custom MongoDB context
   app.use(
     "/api/trpc",

@@ -1,10 +1,13 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import { extractTokenFromHeader, verifyToken } from "./auth";
+import { User } from "../models/User";
 
 export interface AuthUser {
   userId: string;
+  name?: string;
   email: string;
   role: string;
+  avatar?: string;
 }
 
 export type VeventaContext = {
@@ -25,10 +28,16 @@ export async function createVeventaContext(
     if (token) {
       const decoded = verifyToken(token);
       if (decoded) {
+        const profile = await User.findById(decoded.userId)
+          .select("name email role avatar")
+          .lean();
+
         user = {
           userId: decoded.userId,
-          email: decoded.email,
-          role: decoded.role,
+          name: profile?.name || decoded.name,
+          email: profile?.email || decoded.email,
+          role: profile?.role || decoded.role,
+          avatar: profile?.avatar || decoded.avatar,
         };
       }
     }

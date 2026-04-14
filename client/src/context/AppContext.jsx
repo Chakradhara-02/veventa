@@ -15,7 +15,7 @@ export function AppProvider({ children }) {
   });
 
   // tRPC Queries & Mutations
-  trpc.auth.me.useQuery(undefined, {
+  const authMeQuery = trpc.auth.me.useQuery(undefined, {
     enabled: !!localStorage.getItem('authToken'),
     retry: false,
     onSuccess: (data) => setCurrentUser(data),
@@ -45,10 +45,11 @@ export function AppProvider({ children }) {
   const getUserEvents = () => userEventsQuery.data || [];
 
   const getErrorMessage = (error, fallback) => {
-    if (!error) return fallback;
+    if (!error) return fallback || 'Unknown error';
     if (typeof error.message === 'string' && error.message.trim()) return error.message;
     if (typeof error.shape?.message === 'string' && error.shape.message.trim()) return error.shape.message;
-    return fallback;
+    if (typeof error?.data?.message === 'string' && error.data.message.trim()) return error.data.message;
+    return fallback || 'An error occurred';
   };
 
   const isTransientNetworkError = (message) => {
@@ -82,14 +83,18 @@ export function AppProvider({ children }) {
     const result = Array.isArray(payload) ? payload[0] : null;
 
     if (!result) {
-      throw new Error('Invalid server response');
+      throw new Error('Invalid server response: expected array');
     }
 
     if (result.error) {
       throw new Error(result.error?.json?.message || 'Request failed');
     }
 
-    return result?.result?.data?.json;
+    if (!result?.result?.data?.json) {
+      throw new Error('Invalid response structure from server');
+    }
+
+    return result.result.data.json;
   };
 
   // Auth
@@ -262,6 +267,7 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       currentUser, login, register, logout,
+      isAuthLoading: authMeQuery.isLoading,
       events, memories, chats, registrations, getUserEvents,
       createEvent, updateEvent, deleteEvent,
       registerForEvent, cancelRegistration,

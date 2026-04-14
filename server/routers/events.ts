@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { publicProcedure, router, protectedProcedure, organizerProcedure } from '../utils/trpc';
 import { Event } from '../models/Event';
 import { Registration } from '../models/Registration';
+import { User } from '../models/User';
 import { TRPCError } from '@trpc/server';
 import mongoose from 'mongoose';
 
@@ -154,11 +155,13 @@ export const eventsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
+        const organizerName = (ctx.user as { name?: string }).name?.trim() || ctx.user!.email;
+
         const event = new Event({
           ...input,
           organizer: {
             id: new mongoose.Types.ObjectId(ctx.user!.userId),
-            name: ctx.user!.name,
+              name: organizerName,
           },
           ticketsLeft: input.totalTickets,
           registered: 0,
@@ -166,10 +169,8 @@ export const eventsRouter = router({
 
         await event.save();
 
-        // Increment organizer's eventsCreated count
-        await import('../models/User').then(({ User }) =>
-          User.findByIdAndUpdate(ctx.user!.userId, { $inc: { eventsCreated: 1 } })
-        );
+        // Keep organizer profile stats in sync with created events.
+          await User.findByIdAndUpdate(ctx.user!.userId, { $inc: { eventsCreated: 1 } });
 
         return {
           success: true,

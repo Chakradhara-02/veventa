@@ -1,9 +1,7 @@
 import { useState, useCallback } from 'react';
 import { BrowserRouter, HashRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { httpBatchLink } from '@trpc/client';
-import superjson from 'superjson';
-import { trpc } from './lib/trpc';
+import { createTRPCClient, trpc } from './lib/trpc';
 import { AppProvider } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
@@ -19,22 +17,8 @@ import ChatPage from './pages/ChatPage';
 import MemoriesPage from './pages/MemoriesPage';
 
 const queryClient = new QueryClient();
-const apiBaseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
-const trpcUrl = apiBaseUrl ? `${apiBaseUrl}/api/trpc` : '/api/trpc';
 const Router = import.meta.env.VITE_USE_HASH_ROUTER === 'true' ? HashRouter : BrowserRouter;
-
-const trpcClient = trpc.createClient({
-  links: [
-    httpBatchLink({
-      url: trpcUrl,
-      transformer: superjson,
-      headers() {
-        const token = localStorage.getItem('authToken');
-        return token ? { Authorization: `Bearer ${token}` } : {};
-      },
-    }),
-  ],
-});
+const trpcClient = createTRPCClient();
 
 function Layout({ children, hideNav }) {
   return (

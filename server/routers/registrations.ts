@@ -48,7 +48,7 @@ export const registrationsRouter = router({
           });
         }
 
-        // Upsert: re-activate a cancelled registration or create a new one
+        // Re-activate cancelled registration or create a new one.
         await Registration.findOneAndUpdate(
           {
             userId: new mongoose.Types.ObjectId(ctx.user!.userId),
@@ -121,7 +121,7 @@ export const registrationsRouter = router({
           await event.save();
         }
 
-        // Decrement user eventsAttended
+        // Keep user's attended counter accurate after cancellation.
         const user = await User.findById(ctx.user!.userId);
         if (user) {
           user.eventsAttended = Math.max(0, user.eventsAttended - 1);

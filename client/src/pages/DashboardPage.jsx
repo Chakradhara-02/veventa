@@ -10,9 +10,17 @@ import ParticipantsView from './dashboard/ParticipantsView';
 import AnalyticsView from './dashboard/AnalyticsView';
 
 export default function DashboardPage() {
-  const { currentUser } = useApp();
+  const { currentUser, isAuthLoading } = useApp();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  if (isAuthLoading) {
+    return (
+      <div className="page-enter" style={{ minHeight: '100vh', background: 'var(--bg-deep)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--primary-light)', fontSize: '1.05rem' }}>Loading dashboard...</p>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (

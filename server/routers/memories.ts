@@ -25,12 +25,14 @@ export const memoriesRouter = router({
           });
         }
 
+        const authorName = (ctx.user as { name?: string }).name?.trim() || ctx.user!.email;
+
         const memory = new Memory({
           eventId: new mongoose.Types.ObjectId(input.eventId),
           eventTitle: input.eventTitle,
           author: {
             id: new mongoose.Types.ObjectId(ctx.user!.userId),
-            name: ctx.user!.name,
+            name: authorName,
           },
           type: input.type,
           url: input.url,
@@ -190,11 +192,13 @@ export const memoriesRouter = router({
           });
         }
 
+        const authorName = (ctx.user as { name?: string }).name?.trim() || ctx.user!.email;
+
         memory.comments.push({
           _id: new mongoose.Types.ObjectId(),
           author: {
             id: new mongoose.Types.ObjectId(ctx.user!.userId),
-            name: ctx.user!.name,
+            name: authorName,
           },
           text: input.text,
           createdAt: new Date(),

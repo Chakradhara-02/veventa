@@ -22,6 +22,8 @@ export const groupsRouter = router({
           });
         }
 
+        const creatorName = (ctx.user as { name?: string }).name?.trim() || ctx.user!.email;
+
         const userId = new mongoose.Types.ObjectId(ctx.user!.userId);
 
         const group = new Group({
@@ -31,7 +33,7 @@ export const groupsRouter = router({
           members: [
             {
               id: userId,
-              name: ctx.user!.name,
+              name: creatorName,
               role: 'leader',
             },
           ],
