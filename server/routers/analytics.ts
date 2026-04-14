@@ -4,6 +4,7 @@ import { Event } from '../models/Event';
 import { Registration } from '../models/Registration';
 import { User } from '../models/User';
 import { TRPCError } from '@trpc/server';
+import mongoose from 'mongoose';
 
 export const analyticsRouter = router({
   getDashboard: organizerProcedure.query(async ({ ctx }) => {
@@ -124,7 +125,7 @@ export const analyticsRouter = router({
     try {
       // Get organizer's events
       const organizerEvents = await Event.find({
-        'organizer.id': ctx.user!.userId,
+        'organizer.id': new mongoose.Types.ObjectId(ctx.user!.userId),
       });
 
       const totalEventsCreated = organizerEvents.length;
