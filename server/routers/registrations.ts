@@ -34,7 +34,7 @@ export const registrationsRouter = router({
           });
         }
 
-        // Check if already registered
+        // Check if already registered (active)
         const existing = await Registration.findOne({
           userId: new mongoose.Types.ObjectId(ctx.user!.userId),
           eventId: new mongoose.Types.ObjectId(eventId),
@@ -48,13 +48,20 @@ export const registrationsRouter = router({
           });
         }
 
-        // Create registration
-        const registration = new Registration({
-          userId: new mongoose.Types.ObjectId(ctx.user!.userId),
-          eventId: new mongoose.Types.ObjectId(eventId),
-        });
-
-        await registration.save();
+        // Upsert: re-activate a cancelled registration or create a new one
+        await Registration.findOneAndUpdate(
+          {
+            userId: new mongoose.Types.ObjectId(ctx.user!.userId),
+            eventId: new mongoose.Types.ObjectId(eventId),
+          },
+          {
+            $set: {
+              status: 'registered',
+              registeredAt: new Date(),
+            },
+          },
+          { upsert: true }
+        );
 
         // Update event counts
         event.ticketsLeft -= 1;
@@ -112,6 +119,13 @@ export const registrationsRouter = router({
           event.ticketsLeft += 1;
           event.registered = Math.max(0, event.registered - 1);
           await event.save();
+        }
+
+        // Decrement user eventsAttended
+        const user = await User.findById(ctx.user!.userId);
+        if (user) {
+          user.eventsAttended = Math.max(0, user.eventsAttended - 1);
+          await user.save();
         }
 
         return { success: true };
