@@ -158,13 +158,18 @@ export const eventsRouter = router({
           ...input,
           organizer: {
             id: new mongoose.Types.ObjectId(ctx.user!.userId),
-            name: ctx.user!.email,
+            name: ctx.user!.name,
           },
           ticketsLeft: input.totalTickets,
           registered: 0,
         });
 
         await event.save();
+
+        // Increment organizer's eventsCreated count
+        await import('../models/User').then(({ User }) =>
+          User.findByIdAndUpdate(ctx.user!.userId, { $inc: { eventsCreated: 1 } })
+        );
 
         return {
           success: true,
